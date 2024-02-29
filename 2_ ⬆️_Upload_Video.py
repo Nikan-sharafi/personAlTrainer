@@ -4,9 +4,6 @@ import sys
 import streamlit as st
 import cv2
 import tempfile
-# from utils import get_mediapipe_pose
-# from process_frame import ProcessFrame
-# from thresholds import get_thresholds_beginner, get_thresholds_pro
 from main import Squad_couner
 
 

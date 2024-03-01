@@ -119,11 +119,13 @@ if up_file and uploaded:
         txt = st.sidebar.markdown(ip_vid_str, unsafe_allow_html=True)   
         ip_video = st.sidebar.video(tfile.name)
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             correct_metric = st.empty()
         with col2:
             incorrect_metric = st.empty()
+        with col3:
+            messages_metric = st.empty()
             
         while vf.isOpened():
             ret, frame = vf.read()
@@ -133,8 +135,12 @@ if up_file and uploaded:
             # تبدیل فریم از BGR به RGB قبل از پردازش.
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             out_frame, correct, incorrect, msgs = upload_process_frame.process(frame)
-            correct_metric.metric(label="CORRECT", value=correct)
-            incorrect_metric.metric(label="INCORRECT", value=incorrect)
+
+            correct_metric.metric(label="تعداد حرکات درست", value=correct)
+            incorrect_metric.metric(label="تعداد حرکات نادرست", value=incorrect)
+            for i in msgs:
+                messages_metric.markdown("- " + i)
+
             correct_metric.value = correct
             incorrect_metric.value = correct
             
@@ -165,3 +171,4 @@ if os.path.exists(output_video_file) and st.session_state['download']:
     os.remove(output_video_file)
     st.session_state['download'] = False
     download_button.empty()
+    

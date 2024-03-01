@@ -28,7 +28,7 @@ class bodyDetector():
         RGBimg.flags.writeable  = False
  
         results = self.pose.process(RGBimg)
-        self.mpDrow.draw_landmarks(img, results.pose_landmarks, self.mpPose.POSE_CONNECTIONS)
+        # self.mpDrow.draw_landmarks(img, results.pose_landmarks, self.mpPose.POSE_CONNECTIONS)
         try:
             return results.pose_landmarks.landmark
         except:
@@ -69,6 +69,17 @@ class Squad_couner():
                     's2' in self.body_state):
                 self.body_state.append('s3')
     
+    def draw(self, frame, start, end, color, draw_start = True, draw_end = True):
+        start = (int(start[0]),int(start[1]))
+        end = (int(end[0]),int(end[1]))
+        if draw_start:
+            cv2.circle(frame, start, 6, (0,255,255), -1)
+        if draw_end:
+            cv2.circle(frame, end, 6, (0,255,255), -1)
+            
+        cv2.line(frame, start, end, color,3)
+
+
     def process(self, frame):
         h, w, _ = frame.shape
         self.msgs = []
@@ -109,20 +120,32 @@ class Squad_couner():
                 foot_coord = right_foot
 
                 multiplier = 1
+
             #محاسبه زاویه عمودی لگن
             hip_vertical_angle = calculateangel(shoulder_coord, hip_coord, np.array([hip_coord[0], 0]))
-            # cv2.ellipse(frame, hip_coord, (30, 30),
-            # angle=0, startAngle=-90, endAngle=-90 + multiplier * hip_vertical_angle, thickness=3)
-            #
+
             # محاسبه زاویه عمودی زانو
-            # dot = [knee[0], knee[1]- 0.1]
             knee_vertical_angle = calculateangel(hip_coord, knee_coord, np.array([knee_coord[0], 0]))
-            # frame = cv2.circle(frame, tuple(np.multiply(dot2, [1280, 720]).astype(int)), 10, (255, 0, 0), -1)
-            # print(np.array([knee_coord[0], 0]))
+            
             ankle_vertical_angle = calculateangel(knee_coord, ankle_coord, np.array([ankle_coord[0], 0]))
 
+            self.draw(frame, foot_coord, ankle_coord, (255,200,0))
+            self.draw(frame, ankle_coord, knee_coord, (255,200,0))
+            self.draw(frame, knee_coord, hip_coord, (255,200,0))
+            self.draw(frame, knee_coord, hip_coord, (255,200,0))
+            self.draw(frame, hip_coord, shoulder_coord, (255,200,0))
+            
+            self.draw(frame, hip_coord,([hip_coord[0], hip_coord[1] - 50]), (255,100,0), draw_end=False)
+            self.draw(frame, knee_coord, np.array([knee_coord[0], knee_coord[1]-50]), (255,100,0), draw_end=False)
+            
+            cv2.ellipse(frame, (int(hip_coord[0]), int(hip_coord[1])), (30, 30),
+                        angle=0, startAngle=-90, endAngle=-90 + multiplier * hip_vertical_angle,
+                        color=(255, 255, 255), thickness=3, lineType=cv2.LINE_AA)
+            cv2.ellipse(frame, (int(knee_coord[0]), int(knee_coord[1])), (20, 20),
+                        angle=0, startAngle=-90, endAngle=-90 - multiplier * knee_vertical_angle,
+                        color=(255,255,255), thickness=3, lineType=cv2.LINE_AA)
+            
             current_state = self.get_state(int(knee_vertical_angle))
-            # print(hip_coord)
             self.current_state = current_state
             self.create_seq(current_state)
             if current_state == 's1':
@@ -152,7 +175,7 @@ class Squad_couner():
                 # اگر زاویه عمودی  کمتر از حد پایینی
                 # تعیین شده باشد و در توالی s2 وجود داشته باشد
                 elif (hip_vertical_angle < self.thresholds['HIP_THRESH'][0] and
-                        self.self.body_state.count('s2') == 1):
+                        self.body_state.count('s2') == 1):
 
                     self.msgs.append('کمر خود را بیشتر خم کنید')
 
@@ -173,6 +196,7 @@ class Squad_couner():
                 # if ankle_vertical_angle > self.thresholds['ANKLE_THRESH']:
                 #     self.state_tracker['DISPLAY_TEXT'][2] = True
                 #     self.state_tracker['INCORRECT_POSTURE'] = True
+            # print(self.msgs)
             return frame, self.Squad_Count, self.WrongSquad_Count, self.msgs
         else:
             self.body_state = []
@@ -180,3 +204,41 @@ class Squad_couner():
             self.Incorrect_Posture = False
             self.msgs = []
 
+def get_thresholds_beginner():
+
+
+    _ANGLE_HIP_KNEE_VERT = {
+                            'NORMAL': (0,  32),
+                            'TRANS': (35, 65),
+                            'PASS': (70, 95)
+                           }
+        
+    thresholds = {
+                    'HIP_KNEE_VERT': _ANGLE_HIP_KNEE_VERT,
+                    'HIP_THRESH': [10, 50],
+                    'ANKLE_THRESH': 45,
+                    'KNEE_THRESH': [50, 70, 95],
+                    'OFFSET_THRESH': 35.0,
+                    'INACTIVE_THRESH': 15.0,
+                    'CNT_FRAME_THRESH': 50
+                }
+    return thresholds
+
+detector = bodyDetector()
+#Reding from webcam
+cap = cv2.VideoCapture('squat_video.mp4')
+
+def start():
+    thresh = get_thresholds_beginner()
+    SquatDetector = Squad_couner(thresh)
+    while True:
+        ret, frame = cap.read()
+        frame, count, w_count,msgs = SquatDetector.process(frame)
+        print('Correct: ', count)
+        print('Wrong: ', w_count)
+        print('msgs: ', msgs)
+        cv2.imshow('frame', frame)
+        if cv2.waitKey(0) & 0xFF == ord('q'):
+            print('exiting')
+            break
+start()

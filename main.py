@@ -16,7 +16,7 @@ def calculateangel(a, b, c):
     return angel
 
 class bodyDetector():
-    def __init__(self, detectionCon=0.5, trackCon=0.5):
+    def __init__(self, detectionCon=0.7, trackCon=0.7):
         self.mpDrow = mp.solutions.drawing_utils 
         self.mpPose = mp.solutions.pose 
         self.detectionCon = detectionCon
@@ -204,41 +204,3 @@ class Squad_couner():
             self.Incorrect_Posture = False
             self.msgs = []
 
-def get_thresholds_beginner():
-
-
-    _ANGLE_HIP_KNEE_VERT = {
-                            'NORMAL': (0,  32),
-                            'TRANS': (35, 65),
-                            'PASS': (70, 95)
-                           }
-        
-    thresholds = {
-                    'HIP_KNEE_VERT': _ANGLE_HIP_KNEE_VERT,
-                    'HIP_THRESH': [10, 50],
-                    'ANKLE_THRESH': 45,
-                    'KNEE_THRESH': [50, 70, 95],
-                    'OFFSET_THRESH': 35.0,
-                    'INACTIVE_THRESH': 15.0,
-                    'CNT_FRAME_THRESH': 50
-                }
-    return thresholds
-
-detector = bodyDetector()
-#Reding from webcam
-cap = cv2.VideoCapture('squat_video.mp4')
-
-def start():
-    thresh = get_thresholds_beginner()
-    SquatDetector = Squad_couner(thresh)
-    while True:
-        ret, frame = cap.read()
-        frame, count, w_count,msgs = SquatDetector.process(frame)
-        print('Correct: ', count)
-        print('Wrong: ', w_count)
-        print('msgs: ', msgs)
-        cv2.imshow('frame', frame)
-        if cv2.waitKey(0) & 0xFF == ord('q'):
-            print('exiting')
-            break
-start()

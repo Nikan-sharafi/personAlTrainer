@@ -5,50 +5,11 @@ import streamlit as st
 import cv2
 import tempfile
 from main import Squad_couner
-from customMsg import customMsg
+from main import get_thresholds_beginner
+from main import get_thresholds_pro
 
 BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
 sys.path.append(BASE_DIR)
-
-# تنظیم آستانه حرکتی برای مبتدی
-def get_thresholds_beginner():
-
-    ANGLE_HIP_KNEE_VERT = {
-                            'NORMAL': (0,  32),
-                            'TRANS': (35, 65),
-                            'PASS': (70, 95)
-                           }
-        
-    thresholds = {
-                    'HIP_KNEE_VERT': ANGLE_HIP_KNEE_VERT,
-                    'HIP_THRESH': [10, 50],
-                    'ANKLE_THRESH': 45,
-                    'KNEE_THRESH': [50, 70, 95],
-                    'OFFSET_THRESH': 35.0,
-                    'INACTIVE_THRESH': 15.0,
-                    'CNT_FRAME_THRESH': 50
-                }
-    return thresholds
-
-
-# برای حالت pro آستانه حرکتی تنظیم می شود
-def get_thresholds_pro():
-
-    ANGLE_HIP_KNEE_VERT = {
-                            'NORMAL': (0,  32),
-                            'TRANS': (35, 65),
-                            'PASS': (80, 95)
-                           }
-    thresholds = {
-                    'HIP_KNEE_VERT': ANGLE_HIP_KNEE_VERT,
-                    'HIP_THRESH': [15, 50],
-                    'ANKLE_THRESH': 30,
-                    'KNEE_THRESH': [50, 80, 95],
-                    'OFFSET_THRESH': 35.0,
-                    'INACTIVE_THRESH': 15.0,
-                    'CNT_FRAME_THRESH': 50
-                 }
-    return thresholds
 
 st.title('تمرین دهنده ورزشی: حرکت اسکات')
 
@@ -129,6 +90,7 @@ if up_file and uploaded:
             messages_metric = st.empty()
         frame_count = 0
         p_msgs = []
+        
         while vf.isOpened():
             ret, frame = vf.read()
             if not ret:
@@ -154,8 +116,6 @@ if up_file and uploaded:
             for i in msgs:
                 messages_metric.markdown("- " + i)
         
-            correct_metric.value = correct
-            incorrect_metric.value = correct
             
             stframe.image(out_frame)
             video_output.write(out_frame[..., ::-1])

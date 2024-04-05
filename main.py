@@ -11,8 +11,8 @@ def calculateangel(a, b, c):
     radians = np.arctan2(c[1]-b[1], c[0]-b[0]) - np.arctan2(a[1]-b[1], a[0]-b[0])
     angel = np.abs(radians * 180.0 / np.pi) 
 
-    # if angel > 180.0:
-    #     angel = 360 - angel
+    if angel > 180.0:
+        angel = 360 - angel
     return angel
 
 class bodyDetector():
@@ -49,16 +49,27 @@ def get_thresholds_squat_beginner():
                     'HIP_THRESH': [10, 50],
                     'ANKLE_THRESH': 45,
                     'KNEE_THRESH': [50, 70, 95],
-                    'OFFSET_THRESH': 35.0,
-                    'INACTIVE_THRESH': 15.0,
-                    'CNT_FRAME_THRESH': 50
                 }
     return thresholds
 
 def get_tresholds_plank_beginner():
-    thresholds = {'SHOULDER_HIP_KNEE' : [150,200]}
+    thresholds = {'SHOULDER_HIP_KNEE': [150,200], 'HIP_KNEE_ANKLE': [150, 180]}
     return thresholds
 
+def get_thresholds_pushup_beginner():
+    ANGLE_SHOULDER_ELBOW_WRIST = {
+                        'NORMAL': (150,  180),
+                        'TRANS': (100, 140),
+                        'PASS': (50,90)
+                        }
+    
+    thresholds = {
+                    'SHOULDER_ELBOW_WRIST': ANGLE_SHOULDER_ELBOW_WRIST,
+                    'SHOULDER_HIP_ANKLE': [150, 180],
+                    'HIP_KNEE_ANKLE': [150, 180],
+                    'WRIST_THRESH': 45,
+                }
+    return thresholds
 
 # برای حالت pro آستانه حرکتی تنظیم می شود
 def get_thresholds_squat_pro():
@@ -80,7 +91,7 @@ def get_thresholds_squat_pro():
     return thresholds
 
 def get_tresholds_plank_pro():
-    thresholds = {'SHOULDER_HIP_KNEE' : [160,190]}
+    thresholds = {'SHOULDER_HIP_KNEE' : [160,190], 'HIP_KNEE_ANKLE': [160, 180]}
     return thresholds
 
 # تشخیص و شمارش اسکات
@@ -213,7 +224,7 @@ class Squad_couner():
                 # طول توالی ۱ باشد، شمارنده حرکات نادرست را افزایش ده
                 elif ('s2' in self.body_state and len(self.body_state) == 1):
 
-                    self.Squad_Count += 1
+                    self.WrongSquad_Count += 1
 
                 # اگر وضعیت نادرست باشد، شمارنده حرکات نادرست را افزایش ده
                 elif self.Incorrect_Posture:
@@ -248,9 +259,9 @@ class Squad_couner():
                     self.Incorrect_Posture = True
 
                 # اگر زاویه عمودی مچ پا بیشتر از حد تعیین شده باشد
-                # if ankle_vertical_angle > self.thresholds['ANKLE_THRESH']:
-                #     self.state_tracker['DISPLAY_TEXT'][2] = True
-                #     self.state_tracker['INCORRECT_POSTURE'] = True
+                if ankle_vertical_angle > self.thresholds['ANKLE_THRESH']:
+                    self.msgs.append('مچ پا را کمنر خم کنید')
+                    self.Incorrect_Posture = True
             # print(self.msgs)
             print(7)
             return frame, self.Squad_Count, self.WrongSquad_Count, self.msgs
@@ -260,6 +271,9 @@ class Squad_couner():
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
+            print(9)
+            return frame, 0, 0, []
+
 
 # تشخیص و شمارش پلانک
 class Plank_counter():
@@ -280,12 +294,13 @@ class Plank_counter():
         self.msgs = []
         
     def get_state(self, hip_angle):
-        isCorrect = False
+        isInorrect = True
         #self.thresholds['HIP_KNEE_VERT']['NORMAL'][0] <= knee_angle <= self.thresholds['HIP_KNEE_VERT']['NORMAL'][1]
-        if self.thresholds['SHOULDER_HIP_KNEE'][0] <= hip_angle <= self.thresholds['SHOULDER_HIP_KNEE'][1]:
-            isCorrect = True
-
-        return not(isCorrect)            
+        if (self.thresholds['SHOULDER_HIP_KNEE'][0] <= hip_angle <= self.thresholds['SHOULDER_HIP_KNEE'][1] and
+            self.thresholds['HIP_KNEE_ANKLE'][0] <= hip_angle <= self.thresholds['HIP_KNEE_ANKLE'][1]):
+            isInorrect = False
+            
+        return isInorrect            
 
     def draw(self, frame, start, end, color, draw_start = True, draw_end = True):
         start = (int(start[0]),int(start[1]))
@@ -316,7 +331,7 @@ class Plank_counter():
             #محاسبه کدام طرف بودن بدن کاربر
             dist_l_sh_hip = abs(left_foot[1] - left_shoulder[1])
             dist_r_sh_hip = abs(right_foot[1] - right_shoulder[1])
-            if dist_l_sh_hip > dist_r_sh_hip:
+            if left_foot[0] > nose[0]:
                 shoulder_coord = left_shoulder
                 elbow_coord = left_elbow
                 wrist_coord = left_wrist
@@ -341,18 +356,15 @@ class Plank_counter():
             #محاسبه زاویه لگن
             hip_angle = calculateangel(shoulder_coord, hip_coord, ankle_coord)
 
+            #محاسبه زاویه زانو
+            knee_angle = calculateangel(hip_coord, knee_coord, ankle_coord)
+
             self.draw(frame, foot_coord, ankle_coord, (255,200,0))
             self.draw(frame, ankle_coord, knee_coord, (255,200,0))
             self.draw(frame, knee_coord, hip_coord, (255,200,0))
             self.draw(frame, knee_coord, hip_coord, (255,200,0))
             self.draw(frame, hip_coord, shoulder_coord, (255,200,0))
-            
-            # self.draw(frame, hip_coord,([hip_coord[0], hip_coord[1] - 50]), (255,100,0), draw_end=False)
-            # self.draw(frame, knee_coord, np.array([knee_coord[0], knee_coord[1]-50]), (255,100,0), draw_end=False)
-            
-            cv2.ellipse(frame, (int(hip_coord[0]), int(hip_coord[1])), (30, 30),
-                        angle=0, startAngle=-90, endAngle=-90 + multiplier * hip_angle,
-                        color=(255, 255, 255), thickness=3, lineType=cv2.LINE_AA)
+                        
             
             self.Incorrect_Posture = current_state = self.get_state(int(hip_angle))
             
@@ -366,7 +378,7 @@ class Plank_counter():
                     if endTime - self.incorrect_start_time >=1:
                         self.WrongPlank_Count += 1  
                         self.incorrect_start_time = endTime
-                self.msgs.append('کمر خود را خم نکنید')
+                self.msgs.append('بدن خود را خم نکنید')
             else:
                 self.incorrect_start_time = -1
                 if self.correct_start_time == -1:
@@ -386,3 +398,184 @@ class Plank_counter():
             self.Incorrect_Posture = False
             self.msgs = []
 
+class Pushup_counter():
+    def __init__(self, mode):
+        if mode == 'مبتدی':
+            self.thresholds = get_thresholds_pushup_beginner()
+        elif mode == 'حرفه ای':
+            self.thresholds = get_thresholds_squat_pro()
+        self.pose = bodyDetector()
+        self.body_state = []
+        self.Pushup_Count = 0
+        self.WrongPushp_Count = 0
+        self.current_state = ''
+        self.Incorrect_Posture = False
+        self.msgs = []
+    
+    def get_state(self, elbow_angle):
+        state = ''
+        if (self.thresholds['SHOULDER_ELBOW_WRIST']['NORMAL'][0] <= elbow_angle <= self.thresholds['SHOULDER_ELBOW_WRIST']['NORMAL'][1]):
+            state = 's1'
+        elif (self.thresholds['SHOULDER_ELBOW_WRIST']['TRANS'][0] <= elbow_angle <= self.thresholds['SHOULDER_ELBOW_WRIST']['TRANS'][1]):
+            state = 's2'
+        elif (self.thresholds['SHOULDER_ELBOW_WRIST']['PASS'][0] <= elbow_angle <= self.thresholds['SHOULDER_ELBOW_WRIST']['PASS'][1]):
+            state = 's3'
+        
+        print('state:',state) 
+        return state
+    
+    def create_seq(self, state):
+        if state == 's2':
+            if ((('s3' not in self.body_state) and
+                (self.body_state.count('s2')) == 0) or
+                    (('s3' in self.body_state) and
+                     (self.body_state.count('s2') == 1))):
+                self.body_state.append('s2')
+
+        elif state == 's3':
+            if ((state not in self.body_state) and
+                    's2' in self.body_state):
+                self.body_state.append('s3')
+    
+    def draw(self, frame, start, end, color, draw_start = True, draw_end = True):
+        start = (int(start[0]),int(start[1]))
+        end = (int(end[0]),int(end[1]))
+        if draw_start:
+            cv2.circle(frame, start, 6, (0,255,255), -1)
+        if draw_end:
+            cv2.circle(frame, end, 6, (0,255,255), -1)
+            
+        cv2.line(frame, start, end, color,3)
+
+
+    def process(self, frame):
+        # print(1)
+        h, w, _ = frame.shape
+        self.msgs = []
+        # print(2)
+        landmarks = self.pose.prosses(frame)
+        # print(3)
+        if landmarks:
+            nose = [landmarks[0].x*w, landmarks[0].y*h]
+            left_shoulder, left_elbow, left_wrist, left_hip, left_knee, left_ankle, left_foot = [[landmarks[11].x*w, landmarks[11].y*h],
+             [landmarks[13].x*w, landmarks[13].y*h],[landmarks[15].x*w, landmarks[15].y*h],[landmarks[23].x*w, landmarks[23].y*h],[landmarks[25].x*w, landmarks[25].y*h],
+             [landmarks[27].x*w, landmarks[27].y*h],[landmarks[31].x*w, landmarks[31].y*h]]
+
+            right_shoulder, right_elbow, right_wrist, right_hip, right_knee, right_ankle, right_foot = [[landmarks[12].x*w, landmarks[12].y*h],
+             [landmarks[14].x*w, landmarks[14].y*h],[landmarks[16].x*w, landmarks[16].y*h],[landmarks[24].x*w, landmarks[24].y*h],[landmarks[26].x*w, landmarks[26].y*h],
+             [landmarks[28].x*w, landmarks[28].y*h],[landmarks[32].x*w, landmarks[32].y*h]]
+            
+            #محاسبه کدام طرف بودن بدن کاربر
+            dist_l_sh_hip = abs(left_foot[1] - left_shoulder[1])
+            dist_r_sh_hip = abs(right_foot[1] - right_shoulder[1])
+            if left_foot[0] > nose[0]:
+                shoulder_coord = left_shoulder
+                elbow_coord = left_elbow
+                wrist_coord = left_wrist
+                hip_coord = left_hip
+                knee_coord = left_knee
+                ankle_coord = left_ankle
+                foot_coord = left_foot
+
+                multiplier = -1
+
+            else:
+                shoulder_coord = right_shoulder
+                elbow_coord = right_elbow
+                wrist_coord = right_wrist
+                hip_coord = right_hip
+                knee_coord = right_knee
+                ankle_coord = right_ankle
+                foot_coord = right_foot
+
+                multiplier = 1
+            
+            # محاسبه زاویه آرنج
+            shoulder_elbow_wrist_angle = calculateangel(shoulder_coord, elbow_coord, wrist_coord)
+            print('elbow: ',shoulder_elbow_wrist_angle)
+            # محاسبه زاویه زانو
+            hip_knee_ankle_angle = calculateangel(hip_coord, knee_coord, ankle_coord)
+            print('knee: ',hip_knee_ankle_angle)
+
+            #محاسبه زاویه لگن
+            shoulder_hip_ankle_angle = calculateangel(shoulder_coord, hip_coord, ankle_coord)
+            print('back: ',shoulder_hip_ankle_angle)
+            
+            self.draw(frame, foot_coord, ankle_coord, (255,200,0))
+            self.draw(frame, ankle_coord, knee_coord, (255,200,0))
+            self.draw(frame, knee_coord, hip_coord, (255,200,0))
+            self.draw(frame, knee_coord, hip_coord, (255,200,0))
+            self.draw(frame, hip_coord, shoulder_coord, (255,200,0))
+            self.draw(frame, shoulder_coord, elbow_coord, (255,200,0))
+            self.draw(frame, elbow_coord, wrist_coord, (255,200,0))
+    
+            
+            cv2.ellipse(frame, (int(elbow_coord[0]), int(elbow_coord[1])), (20, 20),
+                        angle=0, startAngle=-90, endAngle=-90 -  shoulder_elbow_wrist_angle,
+                        color=(255, 255, 255), thickness=3, lineType=cv2.LINE_AA)
+            # cv2.ellipse(frame, (int(knee_coord[0]), int(knee_coord[1])), (20, 20),
+            #                 angle=0, startAngle=-90, endAngle=-90 - multiplier * knee_vertical_angle,
+            #                 color=(255,255,255), thickness=3, lineType=cv2.LINE_AA)
+            
+            current_state = self.get_state(int(shoulder_elbow_wrist_angle))
+            self.current_state = current_state
+            self.create_seq(current_state)
+            if current_state == 's1':
+                # اگر طول توالی ۳ باشد و وضعیت نادرست نباشد، شمارنده حرکات صحیح را افزایش ده
+                if (len(self.body_state) == 3 and not self.Incorrect_Posture):
+
+                    self.Pushup_Count += 1
+
+                # اگر 's2' در توالی وضعیت وجود داشته باشد و
+                # طول توالی ۱ باشد، شمارنده حرکات نادرست را افزایش ده
+                elif ('s2' in self.body_state and len(self.body_state) == 1):
+
+                    self.WrongPushp_Count += 1
+
+                # اگر وضعیت نادرست باشد، شمارنده حرکات نادرست را افزایش ده
+                elif self.Incorrect_Posture:
+                    self.WrongPushp_Count += 1
+
+                # تنظیمات مربوط به توالی وضعیت را صفر کن
+                self.body_state = []
+                self.Incorrect_Posture = False
+
+            else:
+                if not(self.thresholds['SHOULDER_HIP_ANKLE'][0] < shoulder_hip_ankle_angle < self.thresholds['SHOULDER_HIP_ANKLE'][1]):
+                    self.msgs.append('کمر خود را خم نکنید')
+                    self.Incorrect_Posture = True
+
+                if not(self.thresholds['HIP_KNEE_ANKLE'][0] < hip_knee_ankle_angle < self.thresholds['HIP_KNEE_ANKLE'][1]):
+                    self.msgs.append('زانو های خود را خم نکنید')
+                    self.Incorrect_Posture = True
+                
+                # اگر زاویه عمودی مچ پا بیشتر از حد تعیین شده باشد
+                # if ankle_vertical_angle > self.thresholds['ANKLE_THRESH']:
+                #     self.state_tracker['DISPLAY_TEXT'][2] = True
+                #     self.state_tracker['INCORRECT_POSTURE'] = True
+            # print(self.msgs)
+            return frame, self.Pushup_Count, self.WrongPushp_Count, self.msgs
+        else:
+            print(8)
+            self.body_state = []
+            self.current_state = ''
+            self.Incorrect_Posture = False
+            self.msgs = []
+
+def main():
+    cap = cv2.VideoCapture('pushup1.mp4')
+    counter = Pushup_counter('مبتدی')
+    while cap.isOpened():
+        ret, frame = cap.read()
+
+        frame, count, wrong, msgs = counter.process(frame)
+        frame = cv2.resize(frame, (960,640))
+        print(count, '  /  ', wrong)
+        print(msgs)
+        cv2.imshow('frame', frame)
+        if chr(cv2.waitKey(0)) == 'q':
+            break
+        # cv2.waitKey(100)
+
+if __name__ == '__main__':
+    main()

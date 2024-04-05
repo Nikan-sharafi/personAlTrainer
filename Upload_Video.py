@@ -4,16 +4,13 @@ import sys
 import streamlit as st
 import cv2
 import tempfile
-from main import Squad_couner
-from main import Plank_counter
-from main import get_thresholds_squat_beginner
-from main import get_thresholds_squat_pro
+from main import Squad_couner, Plank_counter, Pushup_counter
 
 def Upload():
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
     sys.path.append(BASE_DIR)
 
-    moves = ("اسکات", "پلانک")
+    moves = ("اسکات", "پلانک","شنا")
     title, select = st.empty(), st.empty()
 
     title.markdown(f"<h1 style='text-align: center;font-family: \"Lalezar\", sans-serif;'\
@@ -50,6 +47,9 @@ def Upload():
             upload_process_frame = Squad_couner(mode=mode)
         elif option == 'پلانک':
             upload_process_frame = Plank_counter(mode=mode)
+        elif option == 'شنا':
+            upload_process_frame = Pushup_counter(mode=mode)
+        
 
 
         download = None

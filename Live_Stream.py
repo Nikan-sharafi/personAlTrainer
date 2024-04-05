@@ -4,17 +4,14 @@ import sys
 import streamlit as st
 from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer
 from aiortc.contrib.media import MediaRecorder
-from main import Squad_couner
-from main import Plank_counter
-from main import get_thresholds_squat_beginner
-from main import get_thresholds_squat_pro
+from main import Squad_couner, Plank_counter, Pushup_counter
 import cv2
 
 def Live():
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
     sys.path.append(BASE_DIR)
 
-    moves = ("اسکات", "پلانک")
+    moves = ("اسکات", "پلانک","شنا")
     title, select = st.empty(), st.empty()
 
     title.markdown(f"<h1 style='text-align: center;font-family: \"Lalezar\", sans-serif;'\
@@ -50,7 +47,8 @@ def Live():
             upload_process_frame = Squad_couner(mode=mode)
         elif option == 'پلانک':
             upload_process_frame = Plank_counter(mode=mode)
-
+        elif option == 'شنا':
+            upload_process_frame = Pushup_counter(mode=mode)
 
         if 'download' not in st.session_state:
             st.session_state['download'] = False
@@ -74,6 +72,7 @@ def Live():
             frame = frame.to_ndarray(format="rgb24")  # Decode and get RGB frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             out_frame, correct, incorrect, msgs = upload_process_frame.process(frame)  # Process frame
+            print(69)
             correct_metric.metric(label="تعداد حرکات درست", value=correct)
             incorrect_metric.metric(label="تعداد حرکات نادرست", value=incorrect)
             '''

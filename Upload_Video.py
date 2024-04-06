@@ -4,13 +4,13 @@ import sys
 import streamlit as st
 import cv2
 import tempfile
-from main import Squad_couner, Plank_counter, Pushup_counter
+from main import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
 
 def Upload():
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
     sys.path.append(BASE_DIR)
 
-    moves = ("اسکات", "پلانک","شنا")
+    moves = ("اسکات", "پلانک", "شنا", "دراز نشست")
     title, select = st.empty(), st.empty()
 
     title.markdown(f"<h1 style='text-align: center;font-family: \"Lalezar\", sans-serif;'\
@@ -45,11 +45,23 @@ def Upload():
 
         if option == 'اسکات':
             upload_process_frame = Squad_couner(mode=mode)
+            st.markdown(
+    """
+    <style>
+    .st-emotion-cache-1v0mbdj{
+        margin: auto;
+        width : 20%;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
         elif option == 'پلانک':
             upload_process_frame = Plank_counter(mode=mode)
         elif option == 'شنا':
             upload_process_frame = Pushup_counter(mode=mode)
-        
+        elif option == 'دراز نشست':
+            upload_process_frame = Situp_counter(mode=mode)
 
 
         download = None
@@ -88,7 +100,6 @@ def Upload():
             
             download_button.empty()
             tfile = tempfile.NamedTemporaryFile(delete=False)
-
             try:
                 warn.empty()
                 tfile.write(up_file.read())
@@ -107,12 +118,19 @@ def Upload():
                 txt = st.sidebar.markdown(ip_vid_str, unsafe_allow_html=True)   
                 ip_video = st.sidebar.video(tfile.name)
                     
-                col1, col2 = st.columns(2) 
+                video_frame = st.empty()
+                col1, col2, col3 = st.columns(3)
                 with col1:
-                    video_frame = st.empty()
+                    st.write('')
                 with col2:
-                    correct_metric = st.empty()
-                    incorrect_metric = st.empty()
+                    col11,col12, col13 = st.columns(3)
+                    with col11:
+                        correct_metric = st.empty()
+                    with col12:
+                        st.markdown('<h1>/</h1>',unsafe_allow_html=True)
+                    with col13:
+                        incorrect_metric = st.empty()
+                with col3:
                     messages_metric = st.empty()
 
                 frame_count = 0
@@ -124,7 +142,13 @@ def Upload():
                         break
                     # تبدیل فریم از BGR به RGB قبل از پردازش.
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    out_frame, correct, incorrect, msgs = upload_process_frame.process(frame)
+
+                    out = upload_process_frame.process(frame)
+
+                    if out:
+                        out_frame, correct, incorrect, msgs = out
+                    else:
+                        out_frame, correct, incorrect, msgs = frame, 0, 0, []
 
                     correct_metric.metric(label="تعداد حرکات درست", value=correct)
                     incorrect_metric.metric(label="تعداد حرکات نادرست", value=incorrect)
@@ -144,7 +168,7 @@ def Upload():
                         messages_metric.markdown("- " + i)
                 
                     with col1:
-                        video_frame.image(out_frame, width=300)
+                        video_frame.image(out_frame)
                     video_output.write(out_frame[..., ::-1])
 
                 vf.release()

@@ -11,7 +11,7 @@ def Live():
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
     sys.path.append(BASE_DIR)
 
-    moves = ("اسکات", "پلانک","شنا")
+    moves = ("اسکات", "پلانک", "شنا", "دراز نشست")
     title, select = st.empty(), st.empty()
 
     title.markdown(f"<h1 style='text-align: center;font-family: \"Lalezar\", sans-serif;'\
@@ -62,20 +62,19 @@ def Live():
             incorrect_metric = st.empty()
         with col3:
             messages_metric = st.empty()
+        
         frame_count = 0
-        p_msgs = []
-
-    
+        p_msgs = []    
         def video_frame_callback(frame):
             print('resid!')
             
             frame = frame.to_ndarray(format="rgb24")  # Decode and get RGB frame
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             out_frame, correct, incorrect, msgs = upload_process_frame.process(frame)  # Process frame
-            print(69)
-            correct_metric.metric(label="تعداد حرکات درست", value=correct)
-            incorrect_metric.metric(label="تعداد حرکات نادرست", value=incorrect)
-            '''
+
+            st.metric(label="تعداد حرکات درست", value=correct)
+            st.metric(label="تعداد حرکات نادرست", value=incorrect)
+
             #نشان دادن طولانی تر پیام ها
             if not msgs:
                 frame_count += 1
@@ -89,16 +88,10 @@ def Live():
 
             for i in msgs:
                 messages_metric.markdown("- " + i)
-                '''
-        '''
-        def video_frame_callback(frame):
-            # Process the video frame (e.g., analyze, modify, etc.)
-            # For debugging purposes, print a message when the callback is called
-            print("video_frame_callback called with frame:", frame)
-            '''
+               
 
         # Example usage of webrtc_streamer with the video_frame_callback:
-        ctx = webrtc_streamer(
+        rtx = webrtc_streamer(
                                 key="Squats-pose-analysis",
                                 video_frame_callback=video_frame_callback,
                                 rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},  # Add this config

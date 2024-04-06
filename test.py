@@ -20,7 +20,7 @@ class bodyDetector():
         except:
             return None
         
-cap = cv2.VideoCapture('plank1.mp4')
+cap = cv2.VideoCapture('test/situp2.mp4')
 a = bodyDetector()
 
 while cap.isOpened():
@@ -30,8 +30,13 @@ while cap.isOpened():
     left_shoulder, left_elbow, left_wrist, left_hip, left_knee, left_ankle, left_foot = [[landmarks[11].x*w, landmarks[11].y*h],
              [landmarks[13].x*w, landmarks[13].y*h],[landmarks[15].x*w, landmarks[15].y*h],[landmarks[23].x*w, landmarks[23].y*h],[landmarks[25].x*w, landmarks[25].y*h],
              [landmarks[27].x*w, landmarks[27].y*h],[landmarks[31].x*w, landmarks[31].y*h]]
-    print(left_shoulder,left_hip,left_knee)
-    print(calculateangel(left_shoulder,left_hip,left_knee))
+    
+    right_shoulder, right_elbow, right_wrist, right_hip, right_knee, right_ankle, right_foot = [[landmarks[12].x*w, landmarks[12].y*h],
+            [landmarks[14].x*w, landmarks[14].y*h],[landmarks[16].x*w, landmarks[16].y*h],[landmarks[24].x*w, landmarks[24].y*h],[landmarks[26].x*w, landmarks[26].y*h],
+            [landmarks[28].x*w, landmarks[28].y*h],[landmarks[32].x*w, landmarks[32].y*h]]
+
+    # qqprint(left_shoulder,left_hip,left_knee)
+    print(calculateangel(left_knee,left_hip,left_shoulder))
     
     cv2.imshow('framw', frame)
     if chr(cv2.waitKey(0)) == 'q':

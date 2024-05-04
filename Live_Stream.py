@@ -1,11 +1,28 @@
 import av
 import os
 import sys
+import asyncio
+import time
+import queue
+# import threading
 import streamlit as st
 from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer
 from aiortc.contrib.media import MediaRecorder
 from main import Squad_couner, Plank_counter, Pushup_counter
 import cv2
+from collections import deque
+
+def w(s):
+    st.write(s)
+class SharedData:
+    def __init__(self):
+        self.data_to_display = None
+        self.start_time = None
+
+    def update_data(self, processed_data, stime):
+        self.data_to_display = processed_data
+        self.start_time = stime
+
 
 def Live():
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
@@ -55,6 +72,30 @@ def Live():
 
         output_video_file = f'output_live.flv'
 
+        
+        def out_recorder_factory() -> MediaRecorder:
+            return MediaRecorder(output_video_file)
+        result_queue: "queue.Queue[list]" = queue.Queue()
+
+        def video_frame_callback(frame):
+            
+            img = frame.to_ndarray(format="rgb24")  
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            out_frame, correct, incorrect, msgs = upload_process_frame.process(img) 
+
+            result_queue.put([correct,incorrect,msgs])   
+            out_frame = cv2.cvtColor(out_frame, cv2.COLOR_RGB2BGR)
+            return av.VideoFrame.from_ndarray(out_frame, format="bgr24")
+
+        ctx = webrtc_streamer(
+                        key="Squats-pose-analysis",
+                        video_frame_callback=video_frame_callback,
+                        media_stream_constraints={"video":  True,"audio": False},
+                        video_html_attrs=VideoHTMLAttributes(autoPlay=True, controls=False, muted=False),
+                        async_processing=True,
+                        out_recorder_factory=out_recorder_factory
+                            )
+        
         col1, col2, col3 = st.columns(3)
         with col1:
             correct_metric = st.empty()
@@ -64,18 +105,15 @@ def Live():
             messages_metric = st.empty()
         
         frame_count = 0
-        p_msgs = []    
-        def video_frame_callback(frame):
-            print('resid!')
-            
-            frame = frame.to_ndarray(format="rgb24")  # Decode and get RGB frame
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            out_frame, correct, incorrect, msgs = upload_process_frame.process(frame)  # Process frame
+        p_msgs = []
 
-            st.metric(label="تعداد حرکات درست", value=correct)
-            st.metric(label="تعداد حرکات نادرست", value=incorrect)
-
-            #نشان دادن طولانی تر پیام ها
+        while ctx.state.playing:
+            result = result_queue.get()
+            # print(result)
+            correct_metric.metric(label="تعداد حرکات درست", value=result[0])
+            incorrect_metric.metric(label="تعداد حرکات نادرست", value=result[1])
+            msgs = result[2]
+            # print(msgs)
             if not msgs:
                 frame_count += 1
                 if frame_count <= 5:
@@ -84,22 +122,12 @@ def Live():
                     msgs = ['']
             else:
                 frame_count = 0
-                p_msgs = msgs
-
+                p_msgs = msgs          
+            
             for i in msgs:
                 messages_metric.markdown("- " + i)
-               
 
-        # Example usage of webrtc_streamer with the video_frame_callback:
-        rtx = webrtc_streamer(
-                                key="Squats-pose-analysis",
-                                video_frame_callback=video_frame_callback,
-                                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},  # Add this config
-                                media_stream_constraints={"video": True, "audio": False},
-                                video_html_attrs=VideoHTMLAttributes(autoPlay=True, controls=False, muted=False),
-                                 async_processing=True,
-                            )
-
+        
         download_button = st.empty()
 
         if os.path.exists(output_video_file):

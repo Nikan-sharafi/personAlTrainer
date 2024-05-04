@@ -279,7 +279,7 @@ class Squad_couner():
 
                 # اگر زاویه عمودی مچ پا بیشتر از حد تعیین شده باشد
                 if ankle_vertical_angle > self.thresholds['ANKLE_THRESH']:
-                    self.msgs.append('مچ پا را کمنر خم کنید')
+                    self.msgs.append('مچ پا را کمتر خم کنید')
                     self.Incorrect_Posture = True
 
             return frame, self.Squad_Count, self.WrongSquad_Count, self.msgs
@@ -410,6 +410,7 @@ class Plank_counter():
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
+            return frame, 0, 0, []
 
 class Pushup_counter():
     def __init__(self, mode):
@@ -555,6 +556,7 @@ class Pushup_counter():
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
+            return frame, 0, 0, []
 
 class Situp_counter():
     def __init__(self, mode):
@@ -670,25 +672,8 @@ class Situp_counter():
 
             return frame, self.Situp_Count, self.WrongSitup_Count, self.msgs
         else:
+            self.body_state = []
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
-    
-def main():
-    cap = cv2.VideoCapture('test/situp2.mp4')
-    counter = Situp_counter('مبتدی')
-    while cap.isOpened():
-        ret, frame = cap.read()
-
-        frame, count, wrong, msgs = counter.process(frame)
-        frame = cv2.resize(frame, (960,640))
-        
-        print(count , ' / ', wrong)
-        print(msgs)
-        cv2.imshow('frame', frame)
-        if chr(cv2.waitKey(0)) == 'q':
-            break
-        # cv2.waitKey(100)
-
-if __name__ == '__main__':
-    main()
+            return frame, 0, 0, []

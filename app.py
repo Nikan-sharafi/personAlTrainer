@@ -80,4 +80,4 @@ else:
         st.markdown("<p style='text-align: right; font-size: 20px;  font-family: \"Vazir\", sans-serif;'>می توانید با باز کردن نوار سمت چپ حرکت انتخابی خود را عوض کنید</p>", unsafe_allow_html=True)
     # st.markdown("<p style='text-align: right; font-size: 20px;  font-family: \"Vazir\", sans-serif;'>ساخته شده با ❤️ توسط نیکان شرفی</p>", unsafe_allow_html=True)
     with c1:
-        st.image('fitness2.svg', width=200)
+        st.image('fitness.svg', width=200)

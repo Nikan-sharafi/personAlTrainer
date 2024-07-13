@@ -3,25 +3,15 @@ import os
 import sys
 import asyncio
 import time
+import pandas as pd
 import queue
 # import threading
 import streamlit as st
-from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer
+from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer, WebRtcMode
 from aiortc.contrib.media import MediaRecorder
-from main import Squad_couner, Plank_counter, Pushup_counter
+from main import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
 import cv2
 from collections import deque
-
-def w(s):
-    st.write(s)
-class SharedData:
-    def __init__(self):
-        self.data_to_display = None
-        self.start_time = None
-
-    def update_data(self, processed_data, stime):
-        self.data_to_display = processed_data
-        self.start_time = stime
 
 
 def Live():
@@ -66,6 +56,8 @@ def Live():
             upload_process_frame = Plank_counter(mode=mode)
         elif option == 'شنا':
             upload_process_frame = Pushup_counter(mode=mode)
+        elif option == 'دراز نشست':
+            upload_process_frame = Situp_counter(mode=mode)
 
         if 'download' not in st.session_state:
             st.session_state['download'] = False
@@ -81,37 +73,48 @@ def Live():
             
             img = frame.to_ndarray(format="rgb24")  
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            out_frame, correct, incorrect, msgs = upload_process_frame.process(img) 
+            out_frame, correct, incorrect,sound , msgs = upload_process_frame.process(img) 
 
             result_queue.put([correct,incorrect,msgs])   
             out_frame = cv2.cvtColor(out_frame, cv2.COLOR_RGB2BGR)
             return av.VideoFrame.from_ndarray(out_frame, format="bgr24")
 
-        ctx = webrtc_streamer(
-                        key="Squats-pose-analysis",
-                        video_frame_callback=video_frame_callback,
-                        media_stream_constraints={"video":  True,"audio": False},
-                        video_html_attrs=VideoHTMLAttributes(autoPlay=True, controls=False, muted=False),
-                        async_processing=True,
-                        out_recorder_factory=out_recorder_factory
-                            )
-        
         col1, col2, col3 = st.columns(3)
         with col1:
+            for _ in range(10):
+                st.text("")
+            # st.markdown("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")
             correct_metric = st.empty()
-        with col2:
+            st.text("")
+            st.text("")
+            # st.markdown("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")
             incorrect_metric = st.empty()
+        with col2:
+            empty = st.empty
         with col3:
+            for _ in range(10):
+                st.text("")
             messages_metric = st.empty()
+        with col2:        
+            ctx = webrtc_streamer(
+                            key="Squats-pose-analysis",
+                            mode = WebRtcMode.SENDRECV,
+                            video_frame_callback=video_frame_callback,
+                            # rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+                            media_stream_constraints={"video":  True,"audio": False},
+                            video_html_attrs=VideoHTMLAttributes(autoPlay=True, controls=False, muted=False),
+                            async_processing=True,
+                            out_recorder_factory=out_recorder_factory
+                                )
         
         frame_count = 0
         p_msgs = []
-
         while ctx.state.playing:
             result = result_queue.get()
             # print(result)
-            correct_metric.metric(label="تعداد حرکات درست", value=result[0])
-            incorrect_metric.metric(label="تعداد حرکات نادرست", value=result[1])
+            with col1:
+                correct_metric.metric(label="تعداد حرکات درست", value=result[0])
+                incorrect_metric.metric(label="تعداد حرکات نادرست", value=result[1])
             msgs = result[2]
             # print(msgs)
             if not msgs:
@@ -123,9 +126,10 @@ def Live():
             else:
                 frame_count = 0
                 p_msgs = msgs          
-            
-            for i in msgs:
-                messages_metric.markdown("- " + i)
+            with col3:
+                    
+                for i in msgs:
+                    messages_metric.markdown("- " + i)
 
         
         download_button = st.empty()

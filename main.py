@@ -138,6 +138,7 @@ class Squad_couner():
         self.Squad_Count = 0
         self.WrongSquad_Count = 0
         self.current_state = ''
+        self.sound = ''
         self.Incorrect_Posture = False
         self.msgs = []
     
@@ -179,6 +180,7 @@ class Squad_couner():
     def process(self, frame):
         h, w, _ = frame.shape
         self.msgs = []
+        self.sound = ''
         landmarks = self.pose.prosses(frame)
         if landmarks:
             nose = [landmarks[0].x*w, landmarks[0].y*h]
@@ -246,6 +248,7 @@ class Squad_couner():
                 if (len(self.body_state) == 3 and not self.Incorrect_Posture):
 
                     self.Squad_Count += 1
+                    self.sound = 'correct'
 
                 # اگر 's2' در توالی وضعیت وجود داشته باشد و
                 # طول توالی ۱ باشد، شمارنده حرکات نادرست را افزایش ده
@@ -256,6 +259,7 @@ class Squad_couner():
                 # اگر وضعیت نادرست باشد، شمارنده حرکات نادرست را افزایش ده
                 elif self.Incorrect_Posture:
                     self.WrongSquad_Count += 1
+                    self.sound = 'wrong'
 
                 # تنظیمات مربوط به توالی وضعیت را صفر کن
                 self.body_state = []
@@ -282,13 +286,13 @@ class Squad_couner():
                     self.msgs.append('مچ پا را کمتر خم کنید')
                     self.Incorrect_Posture = True
 
-            return frame, self.Squad_Count, self.WrongSquad_Count, self.msgs
+            return frame, self.Squad_Count, self.WrongSquad_Count,self.sound ,self.msgs
         else:
             self.body_state = []
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
-            return frame, 0, 0, []
+            return frame, 0, 0, '', []
 
 
 # تشخیص و شمارش پلانک
@@ -404,7 +408,7 @@ class Plank_counter():
 
 
 
-            return frame, self.Plank_Count, self.WrongPlank_Count, self.msgs
+            return frame, self.Plank_Count, self.WrongPlank_Count, '', self.msgs
         else:
             self.body_state = []
             self.current_state = ''
@@ -423,6 +427,7 @@ class Pushup_counter():
         self.Pushup_Count = 0
         self.WrongPushp_Count = 0
         self.current_state = ''
+        self.sound = ''
         self.Incorrect_Posture = False
         self.msgs = []
     
@@ -464,6 +469,7 @@ class Pushup_counter():
     def process(self, frame):
         h, w, _ = frame.shape
         self.msgs = []
+        self.sound = ''
         landmarks = self.pose.prosses(frame)
 
         if landmarks:
@@ -524,17 +530,19 @@ class Pushup_counter():
             if current_state == 's1':
                 # اگر طول توالی ۳ باشد و وضعیت نادرست نباشد، شمارنده حرکات صحیح را افزایش ده
                 if (len(self.body_state) == 3 and not self.Incorrect_Posture):
-
                     self.Pushup_Count += 1
+                    self.sound = 'correct'
 
                 # اگر 's2' در توالی وضعیت وجود داشته باشد و
                 # طول توالی ۱ باشد، شمارنده حرکات نادرست را افزایش ده
                 elif ('s2' in self.body_state and len(self.body_state) == 1):
 
                     self.WrongPushp_Count += 1
+                    self.sound = 'wrong'
 
                 # اگر وضعیت نادرست باشد، شمارنده حرکات نادرست را افزایش ده
                 elif self.Incorrect_Posture:
+                    self.sound = 'wrong'
                     self.WrongPushp_Count += 1
 
                 # تنظیمات مربوط به توالی وضعیت را صفر کن
@@ -550,13 +558,13 @@ class Pushup_counter():
                     self.msgs.append('زانو های خود را خم نکنید')
                     self.Incorrect_Posture = True
                 
-            return frame, self.Pushup_Count, self.WrongPushp_Count, self.msgs
+            return frame, self.Pushup_Count, self.WrongPushp_Count, self.sound, self.msgs
         else:
             self.body_state = []
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
-            return frame, 0, 0, []
+            return frame, 0, 0,'', []
 
 class Situp_counter():
     def __init__(self, mode):
@@ -569,6 +577,7 @@ class Situp_counter():
         self.Situp_Count = 0
         self.WrongSitup_Count = 0
         self.current_state = ''
+        self.sound = ''
         self.body_state = []
         self.Incorrect_Posture = False
         self.msgs = []
@@ -604,6 +613,7 @@ class Situp_counter():
     def process(self, frame):
         h, w, _ = frame.shape
         self.msgs = []
+        self.sound = ''
         landmarks = self.pose.prosses(frame)
 
         if landmarks:
@@ -660,8 +670,10 @@ class Situp_counter():
             if current_state == 's1' and self.body_state == ['s1','s2']:
                 if  not self.Incorrect_Posture:
                     self.Situp_Count += 1
+                    self.sound = 'correct'
                 else:
                     self.WrongSitup_Count += 1
+                    self.sound = 'wrong'
                 self.body_state = []
 
             elif self.body_state == ['s2','s1']:
@@ -670,10 +682,10 @@ class Situp_counter():
             # تنظیمات مربوط به نادرست بودن حرکت را صفر کن
             self.Incorrect_Posture = False
 
-            return frame, self.Situp_Count, self.WrongSitup_Count, self.msgs
+            return frame, self.Situp_Count, self.WrongSitup_Count, self.sound, self.msgs
         else:
             self.body_state = []
             self.current_state = ''
             self.Incorrect_Posture = False
             self.msgs = []
-            return frame, 0, 0, []
+            return frame, 0, 0,'', []

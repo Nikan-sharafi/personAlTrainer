@@ -1,7 +1,7 @@
 import streamlit as st 
 import hydralit_components as hc
 from Upload_Video import Upload
-from Live_Stream import Live, SharedData
+from Live_Stream import Live
 from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer
 from aiortc.contrib.media import MediaRecorder
 from main import Squad_couner, Plank_counter, Pushup_counter
@@ -33,6 +33,9 @@ st.markdown(
     .st-emotion-cache-1v0mbdj{
         margin: auto;
         width : 50%;
+    }
+    .css-14rfh7s{
+        font-family: font-family: \"Vazir\", sans-serif;
     }
     </style>
     """,

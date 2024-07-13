@@ -4,6 +4,8 @@ import sys
 import streamlit as st
 import cv2
 import tempfile
+from playsound import playsound
+import vlc
 from main import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
 
 def Upload():
@@ -80,7 +82,7 @@ def Upload():
 
 
         with st.form('Upload', clear_on_submit=True):
-            up_file = st.file_uploader("آپلود ویدیو", ['mp4','mov', 'avi'])
+            up_file = st.file_uploader("آپلود ویدیو", ['mp4','mov', 'avi', 'avi', 'asf', 'm4v'])
             uploaded = st.form_submit_button("Upload")
 
         stframe = st.empty()
@@ -143,13 +145,13 @@ def Upload():
                     # تبدیل فریم از BGR به RGB قبل از پردازش.
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                    out = upload_process_frame.process(frame)
-
-                    if out:
-                        out_frame, correct, incorrect, msgs = out
-                    else:
-                        out_frame, correct, incorrect, msgs = frame, 0, 0, []
-
+                    out_frame, correct, incorrect, sound , msgs = upload_process_frame.process(frame)
+                    if sound == 'correct':
+                        p = vlc.MediaPlayer("correct.mp3")
+                        p.play()
+                    if sound == 'wrong':
+                        p = vlc.MediaPlayer("wrong.mp3")
+                        p.play()
                     correct_metric.metric(label="تعداد حرکات درست", value=correct)
                     incorrect_metric.metric(label="تعداد حرکات نادرست", value=incorrect)
 

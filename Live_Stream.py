@@ -9,12 +9,30 @@ import queue
 import streamlit as st
 from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer, WebRtcMode
 from aiortc.contrib.media import MediaRecorder
-from main import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
+from utils import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
 import cv2
 from collections import deque
 
 
 def Live():
+    def setFont():
+        st.markdown(
+            """
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Lalezar&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
+            body {
+                direction : rtl;
+            }
+            *,h1,h2,h3,h4,h5,h6, button {
+                font-family: Vazirmatn, sans-serif;
+            }
+
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    setFont()   
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
     sys.path.append(BASE_DIR)
 
@@ -49,15 +67,19 @@ def Live():
         mode = st.radio('سطح حرکت را انتخاب کنید', ['مبتدی', 'حرفه‌ای'], horizontal=True)
 
         thresholds = None 
-
+        move_id = ''
         if option == 'اسکات':
             upload_process_frame = Squad_couner(mode=mode)
+            move_id = 'squat'
         elif option == 'پلانک':
             upload_process_frame = Plank_counter(mode=mode)
+            move_id = 'plank'
         elif option == 'شنا':
             upload_process_frame = Pushup_counter(mode=mode)
+            move_id = 'pushup'
         elif option == 'دراز نشست':
             upload_process_frame = Situp_counter(mode=mode)
+            move_id = 'situp'
 
         if 'download' not in st.session_state:
             st.session_state['download'] = False
@@ -109,6 +131,11 @@ def Live():
         
         frame_count = 0
         p_msgs = []
+        p_correct_count = 0
+        p_wrong_count = 0
+        correct_move_count = 0
+
+        setFont()
         while ctx.state.playing:
             result = result_queue.get()
             # print(result)
@@ -131,12 +158,13 @@ def Live():
                 for i in msgs:
                     messages_metric.markdown("- " + i)
 
-        
+        print('-----------------------------------')
+        print(correct_move_count)
         download_button = st.empty()
 
         if os.path.exists(output_video_file):
             with open(output_video_file, 'rb') as op_vid:
-                download = download_button.download_button('Download Video', data = op_vid, file_name='output_live.flv')
+                download = download_button.download_button('دانلود ویدیو', data = op_vid, file_name='output_live.flv')
 
                 if download:
                     st.session_state['download'] = True

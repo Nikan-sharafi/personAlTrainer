@@ -1,6 +1,6 @@
 import cv2
 import mediapipe as mp
-from main import calculateangel
+from utils import calculateangel
 class bodyDetector():
     def __init__(self, detectionCon=0.5, trackCon=0.5):
         self.mpDrow = mp.solutions.drawing_utils 

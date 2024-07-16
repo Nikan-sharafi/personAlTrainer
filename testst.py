@@ -1,7 +1,7 @@
 from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
-from main import Squad_couner
+from utils import Squad_couner
 def main():
     pr = Squad_couner('مبتدی')
     def video_frame_callback(frame):

@@ -1,5 +1,5 @@
-from main import Plank_counter
-from main import get_treshholds_plank_beginner
+from utils import Plank_counter
+from utils import get_treshholds_plank_beginner
 import cv2
 
 thresh = get_treshholds_plank_beginner()

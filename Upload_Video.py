@@ -6,9 +6,25 @@ import cv2
 import tempfile
 from playsound import playsound
 import vlc
-from main import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
+from utils import Squad_couner, Plank_counter, Pushup_counter, Situp_counter
 
 def Upload():
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lalezar&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
+        body {
+            direction : rtl;
+        }
+        *,h1,h2,h3,h4,h5,h6 {
+            font-family: Vazirmatn, sans-serif;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
     sys.path.append(BASE_DIR)
 
@@ -148,7 +164,7 @@ def Upload():
                     out_frame, correct, incorrect, sound , msgs = upload_process_frame.process(frame)
                     if sound == 'correct':
                         p = vlc.MediaPlayer("correct.mp3")
-                        p.play()
+                        p.play()    
                     if sound == 'wrong':
                         p = vlc.MediaPlayer("wrong.mp3")
                         p.play()

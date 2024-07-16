@@ -2,9 +2,11 @@ import streamlit as st
 import hydralit_components as hc
 from Upload_Video import Upload
 from Live_Stream import Live
+from login import authenticate
+from plan import plan
 from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer
 from aiortc.contrib.media import MediaRecorder
-from main import Squad_couner, Plank_counter, Pushup_counter
+from utils import Squad_couner, Plank_counter, Pushup_counter
 import av
 
 st.set_page_config(page_title="همیار ورزشی", page_icon="./fitness.ico",layout='wide',initial_sidebar_state='collapsed',)
@@ -15,9 +17,7 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Lalezar&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn&display=swap');
 
-    div {
-        font-family: font-family: \"Vazir\", sans-serif; 
-    }   
+
     .row-widget{
         direction: rtl;
     }
@@ -45,7 +45,9 @@ st.markdown(
 
 menu_data = [
     {'id':'Upload','icon':"⬆️",'label':"آپلود ویدیو⬆️"},
-    {'id':'Live','icon':"",'label':"پخش زنده📷️"}
+    {'id':'Live','icon':"",'label':"پخش زنده📷️"},
+    {'id':'plan','icon':"",'label':"انتخاب هدف📆"},
+    {'id':'auth','icon':"",'label':"حساب کاربری"},
 ]
 over_theme = {'txc_inactive': '#FFFFFF'}
 
@@ -63,7 +65,10 @@ if selected_nav_item == 'Upload':
     Upload()
 elif selected_nav_item == 'Live':
     Live()
-
+elif selected_nav_item == 'auth':
+    authenticate()
+elif selected_nav_item == 'plan':
+    plan()
 else:
     st.markdown("<h1 style='text-align: center; font-family: \"Lalezar\", sans-serif;'>درباره</h1>", unsafe_allow_html=True)
     st.write("")

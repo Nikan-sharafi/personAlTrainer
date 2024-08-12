@@ -4,6 +4,7 @@ import streamlit as st
 import streamlit_authenticator as stauth
 
 
+
 def authenticate():
     st.markdown(
         """
